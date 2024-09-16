@@ -1,7 +1,6 @@
 package clientset
 
 import (
-	"log"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -23,8 +22,8 @@ func InitClientset() {
 	}
 	cs, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
-		log.Printf("new clientset err: %v", err)
-		return
+		logrus.Errorf("new clientset err: %v", err)
+		os.Exit(1)
 	}
 	clientset = cs
 }

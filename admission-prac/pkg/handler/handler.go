@@ -13,9 +13,16 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
+type NodeKind string
+
+const (
+	NodeOnDemand NodeKind = "on-demand"
+	NodeSpot     NodeKind = "spot"
+)
+
 var (
-	UniversalDeserializer = serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer()
-	replicasetCache       = make(map[types.UID]bool)
+	UniversalDeserializer      = serializer.NewCodecFactory(runtime.NewScheme()).UniversalDeserializer()
+	nodeSelectorRequirementKey = "node.kubernetes.io/capacity"
 )
 
 type mutateHandler struct {
@@ -100,15 +107,50 @@ func podNotToHandle(pod corev1.Pod) bool {
 	if ownerRef.APIVersion != "apps/v1" || ownerRef.Kind != "ReplicaSet" {
 		return true
 	}
+	if replicasetsOfNoneDeployments[ownerRef.UID] {
+		return true
+	}
 	return false
 }
 
 func setNodeAffinity(ownerRefUID types.UID) corev1.NodeAffinity {
 	nodeAffinity := corev1.NodeAffinity{}
 
+	podCachemap, ok := replicasetCache[ownerRefUID]
+	if !ok {
+		// we can know no pods of the replicaset has came out, of courese including one with on-demand node affinity
+		podCachemap = make(PodCachemap)
+		replicasetCache[ownerRefUID] = podCachemap
+
+		nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = &corev1.NodeSelector{
+			NodeSelectorTerms: []corev1.NodeSelectorTerm{
+				{
+					MatchExpressions: []corev1.NodeSelectorRequirement{
+						{
+							Key:      "node.kubernetes.io/capacity",
+							Operator: "In",
+							Values:   []string{"on-demand"},
+						},
+					},
+				},
+			},
+		}
+
+		return nodeAffinity
+	}
+
+	otherPodHasOnDemandNodeAffinity := false
+	for _, pod := range podCachemap {
+		if podHasOnDemandNodeAffinity(pod) {
+			otherPodHasOnDemandNodeAffinity = true
+			break
+		}
+	}
+
 	// we just want only one pod with NodeAffinity to on-demand node
 
-	if replicasetCache[ownerRefUID] {
+	if otherPodHasOnDemandNodeAffinity {
+		// if replicasetCache[ownerRefUID] {
 		// the same replicaset already had one pod set NodeAffinity to on-demand node,
 		// we want the others pod of the replicaset to get NodeAffinity to spot node
 		nodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = &corev1.NodeSelector{
@@ -139,9 +181,6 @@ func setNodeAffinity(ownerRefUID types.UID) corev1.NodeAffinity {
 				},
 			},
 		}
-		defer func() {
-			replicasetCache[ownerRefUID] = true
-		}()
 	}
 
 	return nodeAffinity
@@ -190,4 +229,21 @@ func extractAdmissionReviewFromRequest(requestBody []byte) (admission.AdmissionR
 	}
 
 	return admissionReviewFromRequest, nil
+}
+
+func podHasOnDemandNodeAffinity(pod corev1.Pod) bool {
+	for _, term := range pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
+		for _, expression := range term.MatchExpressions {
+			if expression.Key == nodeSelectorRequirementKey {
+				if expression.Operator == corev1.NodeSelectorOpIn {
+					for _, value := range expression.Values {
+						if value == string(NodeOnDemand) {
+							return true
+						}
+					}
+				}
+			}
+		}
+	}
+	return false
 }
