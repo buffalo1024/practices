@@ -29,11 +29,11 @@ var (
 	defaultNamespaceLabel = "test-webhook"
 	namespaceLabel        = flag.String("namespacelabel", defaultNamespaceLabel, "label of namespace to apply webhook")
 	serviceSelectorKey    = flag.String("serviceselectorkey", "app", "service selector key")
-	serviceSelectorValue  = flag.String("serviceselectorvalue", "test-hook", "service selector value")
+	serviceSelectorValue  = flag.String("serviceselectorvalue", "test-mutate-webhook", "service selector value")
 	servicePort           = flag.Int("serviceport", 443, "port of service")
 	targetPortName        = flag.String("targetportname", "admission-api", "name of targetport")
 	webhookConfigName     = flag.String("webhookconfigname", "test-admission-mutate", "name of mutatewebhookconfiguration")
-	webhookName           = flag.String("webhookname", "test-mutate-webhook", "name of mutating admission webhook")
+	webhookName           = flag.String("webhookname", "test-mutate-webhook.noorganization.io", "name of mutating admission webhook")
 )
 
 type SelfRegisterParameters struct {
@@ -59,7 +59,10 @@ func main() {
 
 	if !*noSelfRegister {
 		logrus.Println("to do self register")
-		selfRegisterParameters := SelfRegisterParameters{}
+		selfRegisterParameters := SelfRegisterParameters{
+			ServiceName:      "test-mutate-webhook",
+			ServiceNamespace: "test",
+		}
 		go selfRegister(selfRegisterParameters)
 	}
 

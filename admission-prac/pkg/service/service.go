@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"log"
 
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -30,9 +30,8 @@ func CreateService(parameters ServiceParameters) {
 	}
 
 	cs := clientset.GetClientset()
-	log.Printf("to create svc")
-	if _, err := cs.CoreV1().Services("").Create(context.TODO(), &svc, v1.CreateOptions{}); err != nil {
-		log.Printf("create svc err: %v", err)
+	if _, err := cs.CoreV1().Services(svc.GetNamespace()).Create(context.TODO(), &svc, v1.CreateOptions{}); err != nil {
+		logrus.Errorf("create svc err: %v", err)
 		return
 	}
 }
