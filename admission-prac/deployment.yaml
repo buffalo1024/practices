@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-mutate-webhook
+  namespace: test
+  labels:
+    app: test-mutate-webhook
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: test-mutate-webhook
+  template:
+    metadata:
+      labels:
+        app: test-mutate-webhook
+    spec:
+      serviceAccountName: test-mutate-webhook
+      containers:
+        - name: server
+          image: admission-prac:test2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 18443
+              name: admission-api
