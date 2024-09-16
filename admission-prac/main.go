@@ -52,6 +52,11 @@ func main() {
 		Addr:    ":18443",
 	}
 
+	clientset.InitClientset()
+	stopCh := make(chan struct{})
+	defer close(stopCh)
+	go handler.StartInformer(stopCh)
+
 	if !*noSelfRegister {
 		logrus.Println("to do self register")
 		selfRegisterParameters := SelfRegisterParameters{}
@@ -64,7 +69,7 @@ func main() {
 
 func selfRegister(parameters SelfRegisterParameters) {
 	logrus.Println("self registering")
-	clientset.InitClientset()
+	// clientset.InitClientset()
 	serviceParameters := service.ServiceParameters{
 		Name:      parameters.ServiceName,
 		Namespace: parameters.ServiceNamespace,

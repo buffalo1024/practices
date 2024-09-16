@@ -2,12 +2,11 @@ module practices/admission-prac
 
 go 1.18
 
-require k8s.io/api v0.26.0
-
-require github.com/sirupsen/logrus v1.9.0
-
 require (
-	k8s.io/client-go v0.23.0
+	github.com/sirupsen/logrus v1.9.0
+	k8s.io/api v0.24.0
+	k8s.io/apimachinery v0.24.0
+	k8s.io/client-go v0.24.0
 	sigs.k8s.io/controller-runtime v0.11.0
 )
 
@@ -64,8 +63,6 @@ require (
 	golang.org/x/text v0.16.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	// k8s.io/api/admission v0.26.0
-	k8s.io/apimachinery v0.26.0
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
@@ -77,9 +74,3 @@ replace practices/admission-prac v0.0.0 => ./
 
 // replace practices/admission-prac v0.0.0 => ../admission-prac
 // replace practices/admission-prac v0.0.0 => ../
-
-replace k8s.io/client-go => k8s.io/client-go v0.24.0
-
-replace k8s.io/api => k8s.io/api v0.24.0
-
-replace k8s.io/apimachinery => k8s.io/apimachinery v0.24.0
