@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"net/http"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -36,9 +38,16 @@ var (
 	webhookName           = flag.String("webhookname", "test-mutate-webhook.noorganization.io", "name of mutating admission webhook")
 )
 
+var (
+	certsDir = "/etc/webhook/certs"
+	certKey  = "tls.key"
+	certFile = "tls.crt"
+)
+
 type SelfRegisterParameters struct {
 	ServiceName      string
 	ServiceNamespace string
+	CACert           bytes.Buffer
 }
 
 func main() {
@@ -57,16 +66,21 @@ func main() {
 	defer close(stopCh)
 	go handler.StartInformer(stopCh)
 
+	serverCertPEM, _, _ := handler.HandleCerts()
+
 	if !*noSelfRegister {
 		logrus.Println("to do self register")
 		selfRegisterParameters := SelfRegisterParameters{
 			ServiceName:      "test-mutate-webhook",
 			ServiceNamespace: "test",
+			CACert:           *serverCertPEM,
 		}
 		go selfRegister(selfRegisterParameters)
 	}
 
-	logrus.Fatal(server.ListenAndServe())
+	certPath := filepath.Join(certsDir, certFile)
+	keyPath := filepath.Join(certsDir, certKey)
+	logrus.Fatal(server.ListenAndServeTLS(certPath, keyPath))
 	logrus.Println("exiting")
 }
 
@@ -107,6 +121,7 @@ func selfRegister(parameters SelfRegisterParameters) {
 				},
 			},
 		},
+		CACert: &parameters.CACert,
 	}
 	if *failurePolicy == failFailurePolicy {
 		mutatingWebhookConfigurationParameters.FailurePolicy = admissionregistrationv1.FailurePolicyType(admissionregistrationv1.Fail)
