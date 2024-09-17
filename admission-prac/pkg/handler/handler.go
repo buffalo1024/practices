@@ -93,7 +93,12 @@ func (h *mutateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logrus.Debugln("handled successfully")
-	w.Write(admissionReviewResponseBytes)
+	_, writeErr := w.Write(admissionReviewResponseBytes)
+	if writeErr != nil {
+		logrus.WithError(writeErr).Error("write response err")
+		return
+	}
+	logrus.Debug("write response successfully")
 }
 
 func podNotToHandle(pod corev1.Pod) bool {
@@ -232,6 +237,18 @@ func extractAdmissionReviewFromRequest(requestBody []byte) (admission.AdmissionR
 }
 
 func podHasOnDemandNodeAffinity(pod corev1.Pod) bool {
+	if pod.Spec.Affinity == nil {
+		return false
+	}
+	if pod.Spec.Affinity.NodeAffinity == nil {
+		return false
+	}
+	if pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil {
+		return false
+	}
+	if pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms == nil {
+		return false
+	}
 	for _, term := range pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
 		for _, expression := range term.MatchExpressions {
 			if expression.Key == nodeSelectorRequirementKey {

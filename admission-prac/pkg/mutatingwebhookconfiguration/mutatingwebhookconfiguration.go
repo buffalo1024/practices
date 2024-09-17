@@ -1,6 +1,7 @@
 package mutatingwebhookconfiguration
 
 import (
+	"bytes"
 	"context"
 	"log"
 
@@ -16,6 +17,7 @@ type MutatingWebhookConfigurationParameters struct {
 	admissionregistrationv1.ServiceReference
 	FailurePolicy            admissionregistrationv1.FailurePolicyType
 	WebhookNamespaceSelector v1.LabelSelector
+	CACert                   *bytes.Buffer
 }
 
 func CreateMutateWebhookConfiguration(parameters MutatingWebhookConfigurationParameters) {
@@ -27,7 +29,8 @@ func CreateMutateWebhookConfiguration(parameters MutatingWebhookConfigurationPar
 			{
 				Name: parameters.WebhookName,
 				ClientConfig: admissionregistrationv1.WebhookClientConfig{
-					Service: &parameters.ServiceReference,
+					Service:  &parameters.ServiceReference,
+					CABundle: parameters.CACert.Bytes(),
 				},
 				Rules: []admissionregistrationv1.RuleWithOperations{
 					{
