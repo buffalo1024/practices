@@ -11,6 +11,10 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+var (
+	seconds30 = int32(30)
+)
+
 type MutatingWebhookConfigurationParameters struct {
 	ConfigurationName string
 	WebhookName       string
@@ -42,6 +46,7 @@ func CreateMutateWebhookConfiguration(parameters MutatingWebhookConfigurationPar
 						},
 					},
 				},
+				// TimeoutSeconds:          &seconds30,
 				FailurePolicy:           &parameters.FailurePolicy,
 				NamespaceSelector:       &parameters.WebhookNamespaceSelector,
 				AdmissionReviewVersions: []string{"v1", "v1beta1"},

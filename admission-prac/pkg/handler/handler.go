@@ -3,7 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	admission "k8s.io/api/admission/v1beta1"
@@ -39,7 +41,9 @@ type PatchOperation struct {
 }
 
 func (h *mutateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	logrus.Debugln("requested")
+	requestMark := rand.Int()
+	startTime := time.Now()
+	logrus.Debugf("requested, requestMark: %v, startTime: %v", requestMark, startTime)
 	if r.Method != http.MethodPost {
 		logrus.Errorln("request method not allowed")
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -86,6 +90,8 @@ func (h *mutateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	logrus.Debugf("admission review patch to response: %s", admissionReviewToResponse.Response.Patch)
 	admissionReviewResponseBytes, err := json.Marshal(admissionReviewToResponse)
 	if err != nil {
 		logrus.Errorf("json marshal admission review response err: %v", err)
@@ -99,6 +105,9 @@ func (h *mutateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logrus.Debug("write response successfully")
+	endTime := time.Now()
+	elapesdTime := endTime.Sub(startTime)
+	logrus.Debugf("request ended, requestMark: %v, endTime: %v, elapesdTime: %v", requestMark, endTime, elapesdTime)
 }
 
 func podNotToHandle(pod corev1.Pod) bool {
@@ -205,7 +214,7 @@ func buildAdmissionReviewToResponse(admissionReviewFromRequest admission.Admissi
 	op := PatchOperation{
 		Operation: "add",
 		// Path:      "/spec/affinity/nodeAffinity/requiredDuringSchedulingIgnoredDuringExecution",
-		Path:  "/spec/affnity",
+		Path:  "/spec/affinity",
 		Value: affinity,
 	}
 	patchOperations = append(patchOperations, op)
