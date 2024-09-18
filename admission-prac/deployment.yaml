@@ -20,6 +20,10 @@ spec:
       serviceAccountName: test-mutate-webhook
       containers:
         - name: server
+          args:
+            - --v=5
+            - --namespace=test
+            - --servicename=test-mutate-webhook
           image: admission-prac:test2
           imagePullPolicy: IfNotPresent
           ports:
