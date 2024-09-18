@@ -16,9 +16,10 @@ import (
 )
 
 var (
-	webhookNamespace  = "test"
-	webhookService    = "test-mutate-webhook"
-	Organization      = "noorganization"
+	webhookNamespace = "test"
+	webhookService   = "test-mutate-webhook"
+	Organization     = "noorganization"
+	// Organization      = "noorganization.io"
 	DefaultEffecttime = 10
 	dnsNames          = []string{webhookService, webhookService + "." + webhookNamespace, webhookService + "." + webhookNamespace + "." + "svc"}
 	commonName        = webhookService + "." + webhookNamespace + "." + "svc"
