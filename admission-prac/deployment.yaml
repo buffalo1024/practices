@@ -24,7 +24,12 @@ spec:
             - --v=5
             - --namespace=test
             - --servicename=test-mutate-webhook
-          image: admission-prac:test2
+            - --namespacelabel=test-webhook
+            - --serviceselectorkey=app
+            - --serviceselectorvalue=test-mutate-webhook
+            - --webhookconfigname=test-admission-mutate
+            - --webhookname=test-mutate-webhook.noorganization.io
+          image: ttl.sh/admission-prac
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 18443
