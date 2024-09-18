@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"practices/admission-prac/pkg/clientset"
+	"practices/admission-prac/pkg/config"
 	"practices/admission-prac/pkg/handler"
 	"practices/admission-prac/pkg/mutatingwebhookconfiguration"
 	"practices/admission-prac/pkg/service"
@@ -36,6 +37,8 @@ var (
 	targetPortName        = flag.String("targetportname", "admission-api", "name of targetport")
 	webhookConfigName     = flag.String("webhookconfigname", "test-admission-mutate", "name of mutatewebhookconfiguration")
 	webhookName           = flag.String("webhookname", "test-mutate-webhook.noorganization.io", "name of mutating admission webhook")
+	namespace             = flag.String("namespace", "test", "kubernetes namespace this program run in")
+	serviceName           = flag.String("servicename", "test-mutate-webhook", "name of service")
 )
 
 var (
@@ -53,6 +56,7 @@ type SelfRegisterParameters struct {
 func main() {
 	flag.Parse()
 	setupLogging()
+	config.SetConfig(*namespace, *serviceName)
 	logrus.Println("starting")
 	mux := http.NewServeMux()
 	mux.Handle(*mutatePath, handler.NewMutateHandler())
@@ -71,8 +75,10 @@ func main() {
 	if !*noSelfRegister {
 		logrus.Println("to do self register")
 		selfRegisterParameters := SelfRegisterParameters{
-			ServiceName:      "test-mutate-webhook",
-			ServiceNamespace: "test",
+			// ServiceName:      "test-mutate-webhook",
+			ServiceName: config.GetServiceName(),
+			// ServiceNamespace: "test",
+			ServiceNamespace: config.GetNamespace(),
 			CACert:           *serverCertPEM,
 		}
 		go selfRegister(selfRegisterParameters)

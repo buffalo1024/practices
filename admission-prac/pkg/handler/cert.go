@@ -12,20 +12,24 @@ import (
 	"path/filepath"
 	"time"
 
+	"practices/admission-prac/pkg/config"
+
 	"github.com/sirupsen/logrus"
 )
 
 var (
-	webhookNamespace = "test"
-	webhookService   = "test-mutate-webhook"
-	Organization     = "noorganization"
+	// webhookNamespace = "test"
+	// webhookService   = "test-mutate-webhook"
+	Organization = "noorganization"
 	// Organization      = "noorganization.io"
 	DefaultEffecttime = 10
-	dnsNames          = []string{webhookService, webhookService + "." + webhookNamespace, webhookService + "." + webhookNamespace + "." + "svc"}
-	commonName        = webhookService + "." + webhookNamespace + "." + "svc"
-	certsDir          = "/etc/webhook/certs"
-	certKey           = "tls.key"
-	certFile          = "tls.crt"
+	// dnsNames          = []string{webhookService, webhookService + "." + webhookNamespace, webhookService + "." + webhookNamespace + "." + "svc"}
+	dnsNames = []string{config.GetServiceName(), config.GetServiceName() + "." + config.GetNamespace(), config.GetServiceName() + "." + config.GetNamespace() + "." + "svc"}
+	// commonName        = webhookService + "." + webhookNamespace + "." + "svc"
+	commonName = config.GetServiceName() + "." + config.GetNamespace() + "." + "svc"
+	certsDir   = "/etc/webhook/certs"
+	certKey    = "tls.key"
+	certFile   = "tls.crt"
 )
 
 type certManager struct {
